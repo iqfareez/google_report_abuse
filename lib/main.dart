@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-enum AbuseType { nudity, hateViolence, spam, confidential, copyright }
-
 const emphasisTextStyle = TextStyle(fontSize: 19, fontWeight: FontWeight.bold);
-
 void main() {
   runApp(MyApp());
 }
@@ -29,6 +26,8 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  int? _currentIndex = 0;
+  bool _isSubmitting = false;
   Map<String, String> _abuseMap = {
     'Nudity':
         "We don't allow the sharing or publishing of content depicting nudity, graphic sex acts, or other sexually explicit material. We also don't allow content that drives traffic to commercial pornography sites or that promotes pedophilia, incest, or bestiality.\n\nWe have a zero tolerance policy towards content that exploits children. This means that we will terminate the accounts of any user we find sharing or publishing child sexual abuse imagery. We will also report the content and its owner to law enforcement.\n\nWe also do not allow the sharing or publishing of content that encourages or promotes sexual attraction towards children.",
@@ -41,7 +40,6 @@ class _MyHomePageState extends State<MyHomePage> {
     'Copyright infringement':
         "It is our policy to respond to clear notices of alleged copyright infringement. If you own the copyright to material in this document, please use this form to report an official Digital Millennium Copyright Act (DMCA) complaint:"
   };
-  AbuseType? _abuseType = AbuseType.values.first;
 
   @override
   Widget build(BuildContext context) {
@@ -70,19 +68,18 @@ class _MyHomePageState extends State<MyHomePage> {
                 shrinkWrap: true,
                 itemCount: _abuseMap.length,
                 itemBuilder: (context, index) {
-                  return RadioListTile<AbuseType>(
+                  return RadioListTile<int>(
                     contentPadding: EdgeInsets.zero,
-                    value: AbuseType.values[index],
+                    value: index,
                     title: Text(
                       _abuseMap.keys.elementAt(index),
                       style: TextStyle(fontSize: 16),
                     ),
-                    groupValue: _abuseType,
-                    onChanged: (AbuseType? value) {
-                      setState(() => _abuseType = value);
+                    groupValue: _currentIndex,
+                    onChanged: (value) {
+                      setState(() => _currentIndex = value);
                       print(
-                        _abuseMap.keys
-                            .elementAt(value == null ? 0 : value.index),
+                        _abuseMap.keys.elementAt(value == null ? 0 : value),
                       );
                     },
                   );
@@ -90,11 +87,11 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
               SizedBox(height: 18),
               Text(
-                  'Our policy on ${_abuseMap.keys.elementAt(_abuseType!.index).toLowerCase()}',
+                  'Our policy on ${_abuseMap.keys.elementAt(_currentIndex!).toLowerCase()}',
                   style: emphasisTextStyle),
               SizedBox(height: 18),
               SelectableText(
-                _abuseMap.values.elementAt(_abuseType!.index),
+                _abuseMap.values.elementAt(_currentIndex!),
                 style: TextStyle(fontSize: 16),
               ),
               SizedBox(height: 22),
@@ -114,19 +111,38 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                   SizedBox(width: 10),
                   ElevatedButton(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).clearSnackBars();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Pressed submit'),
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                    },
+                    onPressed: _isSubmitting
+                        ? null
+                        : () {
+                            setState(() => _isSubmitting = true);
+                            ScaffoldMessenger.of(context).clearSnackBars();
+                            //Give some delay to show progress indicator
+                            Future.delayed(Duration(milliseconds: 790))
+                                .then((value) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Pressed submit'),
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                              setState(() => _isSubmitting = false);
+                            });
+                          },
                     child: Text(
                       'SUBMIT ABUSE REPORT',
                     ),
-                  )
+                  ),
+                  SizedBox(
+                    width: 25,
+                  ),
+                  _isSubmitting
+                      ? Center(
+                          child: SizedBox(
+                              width: 10,
+                              height: 10,
+                              child: CircularProgressIndicator()),
+                        )
+                      : SizedBox.shrink(),
                 ],
               ),
               SizedBox(
